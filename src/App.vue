@@ -45,50 +45,60 @@ import { _allStates } from "./states.js";
 export default {
   name: "App",
 
-  data: () => ({
-    allStates: _allStates,
-  }),
+  data: () => ({}),
 
   created() {
-    let query =
-      "https://en.wikivoyage.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&inprop=url&titles=";
+    const endpoint = "https://en.wikivoyage.org/w/api.php?",
+      actionAndFormat = "action=query&format=json&",
+      props = "prop=extracts%7Cinfo&exintro=1&explaintext=1&inprop=url&titles=";
+
+    const query = endpoint + actionAndFormat + props;
 
     //API requires underscore between two-word state names
-    let addUnderscore = function (arr) {
-      return arr.map((a) => {
-        if (a.includes(" ")) {
-          let b = a.split("");
-          b[b.indexOf(" ")] = "_";
-          a = b.join("");
-        }
+    const replaceSpace = function (str, char) {
+      if (str.includes(" ")) {
+        let b = str.split("");
+        b[b.indexOf(" ")] = char;
+        str = b.join("");
+      }
 
-        //These titles direct to optional link pages.
-        //Adding 'state' directs to the correct page.
-        if (a === "New_York" || a === "Georgia" || a === "Washington") {
-          a = a + " (state)";
-        }
+      if (str === "New_York" || str === "Georgia" || str === "Washington") {
+        str = str + " (state)";
+      }
 
-        return a;
-      });
+      return str;
     };
 
     //Split into batches because API will only return a max of 20 page extracts;
-    let group1 = addUnderscore(_allStates.slice(0, 20)),
-      group2 = addUnderscore(_allStates.slice(20, 40)),
-      group3 = addUnderscore(_allStates.slice(40, 50));
+    let group1 = _allStates.slice(0, 20).map((s) => replaceSpace(s, "_")),
+      group2 = _allStates.slice(20, 40).map((s) => replaceSpace(s, "_")),
+      group3 = _allStates.slice(40, 50).map((s) => replaceSpace(s, "_"));
 
-    let allGroups = [group1, group2, group3];
-
-    let queries = allGroups.map((g) => {
-      let queryForGroup = query + g.join("|");
+    //Form individual queries for each group.
+    const queries = [group1, group2, group3].map((group) => {
+      let queryForGroup = query + group.join("|");
       return queryForGroup.slice(0, queryForGroup.length) + "&origin=*";
     });
 
-    queries.forEach((q) => {
-      fetch(q)
-        .then((response) => response.json())
-        .then((data) => console.log(data));
-    });
+    //Fetch data from API
+    Promise.all(queries.map((q) => fetch(q)))
+      .then((res) => Promise.all(res.map((r) => r.json())))
+      .then((data) => {
+        //Merge data from groups into a single object.
+        let allDataObj = {};
+        data
+          .map((d) => d.query.pages)
+          .forEach((page) => Object.assign(allDataObj, page));
+
+        //Merge data from allData object into an array.
+        let allDataArr = [];
+        for (let key of Object.keys(allDataObj)) {
+          allDataArr.push(allDataObj[key]);
+        }
+
+        console.log(allDataArr);
+      })
+      .catch((err) => console.log(err));
   },
 };
 </script>
@@ -100,3 +110,5 @@ export default {
   background-image: url("./assets/background.svg");
 }
 </style>
+
+https://www.mediawiki.org/w/api.php?action=query&format=json&prop=extracts%7Cinfo&inprop=url
