@@ -50,14 +50,3 @@ export const _allStates = [
   "Wisconsin",
   "Wyoming",
 ];
-
-// let allStates_sansSpaces = allStates.map(s => {
-//   if (s.includes(' ')) {
-//     let arr = s.split('');
-//     arr[arr.indexOf(' ')] = '_';
-
-//     s = arr.join('');
-//   }
-
-//   return s;
-// })
