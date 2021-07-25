@@ -1,16 +1,25 @@
 <template>
-  <!-- <div></div> -->
-  <hello-world />
+  <game-interface v-on="$listeners"></game-interface>
 </template>
 
 <script>
-import HelloWorld from "../components/HelloWorld";
+import GameInterface from "@/components/GameInterface.vue";
 
 export default {
   name: "Home",
 
   components: {
-    HelloWorld,
+    GameInterface,
+  },
+
+  data: () => ({}),
+
+  computed: {
+    appBarHeight() {
+      const appBar = document.querySelector("#appbar");
+
+      return appBar.style.height;
+    },
   },
 };
 </script>

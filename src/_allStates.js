@@ -46,6 +46,7 @@ export const _allStates = [
   "Vermont",
   "Virginia",
   "Washington",
+  "Washington, D.C.",
   "West Virginia",
   "Wisconsin",
   "Wyoming",
