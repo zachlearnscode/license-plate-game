@@ -1,29 +1,36 @@
 <template>
-  <div
+  <v-container
     :id="state.idFromName"
-    :class="[
-      open ? 'my-3 elevation-3' : '',
-      rounded[0] ? 'rounded-t' : '',
-      rounded[1] ? 'rounded-b' : '',
-      state.found ? 'light-green lighten-5' : 'white',
-    ]"
-    class="smooth"
-    style="width: 100%"
+    :class="{
+      'my-3 elevation-3': open,
+      'rounded-t': rounded[0],
+      'rounded-b': rounded[1],
+      'white': !state.found,
+      'light-green lighten-5': state.found
+    }"
+    class="panel"
   >
-    <div class="d-flex justify-space-between align-center pa-3">
-      <v-checkbox
-        :label="state.name"
-        :value="state.found"
-        @click="$emit('state-found', state)"
-      />
-      <v-btn icon @click="open = !open">
-        <v-icon :class="open ? 'arrowUp' : ''">mdi-chevron-down</v-icon>
-      </v-btn>
-    </div>
+    <v-row class="d-flex justify-space-between align-center pa-3">
+      <v-col cols="auto">
+        <v-checkbox
+          :label="state.name"
+          :input-value="state.found"
+          @click="$emit('state-found', state)"
+        />
+      </v-col>
+      <v-spacer></v-spacer>
+      <v-col cols="auto">
+        <v-btn icon @click="open = !open">
+          <v-icon :class="{'arrowUp': open}">mdi-chevron-down</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
     <v-expand-transition>
-      <div v-show="open" class="pa-3 rounded-b">{{ state.extract }}</div>
+      <v-row v-show="open" class="pa-3">
+        <v-col>{{ state.extract }}</v-col>
+      </v-row>
     </v-expand-transition>
-  </div>
+  </v-container>
 </template>
 
 <script>
@@ -33,18 +40,10 @@ export default {
   data: () => ({
     open: false,
   }),
-
-  mounted() {
-    let panelWidth = document.querySelector(".smooth").offsetWidth;
-    return this.$emit("panels-mounted", panelWidth);
-  },
 };
 </script>
 
-<style scoped>
-.smooth {
-  transition: all 300ms ease-in-out;
-}
+<style>
 .arrowUp {
   transform: rotate(-0.5turn);
 }

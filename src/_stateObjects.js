@@ -8,9 +8,15 @@ class StateObject {
 
     this.extract = undefined;
     this.fullurl = undefined;
+
+    this.show = true;
   }
 
   get idFromName() {
+    if (this.name === "Washington, D.C.") {
+      return "washingtondc"
+    }
+    
     const stateName = this.name;
     let id = stateName.toLowerCase();
 

@@ -6,9 +6,7 @@
 
     <v-main class="blue lighten-1">
       <router-view @intersection="hideForeground = $event" />
-      <transition name="fade">
-        <foreground :hide="hideForeground"></foreground>
-      </transition>
+      <foreground :hide="hideForeground"></foreground>
     </v-main>
   </v-app>
 </template>
@@ -26,7 +24,6 @@ export default {
   data() {
     return {
       hideForeground: false,
-      blur: false,
     };
   },
 
@@ -35,12 +32,5 @@ export default {
 </script>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 300ms;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
-}
+
 </style>
