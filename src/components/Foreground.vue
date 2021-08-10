@@ -1,12 +1,12 @@
 <template>
-<transition name="fade">
-  <v-img v-if="!hide" src="../assets/background.svg" class="foreground"/>
-</transition>
+  <v-fade-transition mode="out-in">
+    <v-img v-show="!hide" src="../assets/background.svg" class="foreground" />
+  </v-fade-transition>
 </template>
 
 <script>
 export default {
-  props: ["hide"]
+  props: ["hide"],
 };
 </script>
 
@@ -17,12 +17,7 @@ export default {
   width: 100vw;
   filter: drop-shadow(0px -3px 10px rgba(0, 0, 0, 0.25));
 }
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 300ms;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
+.hideForeground {
+  display: none;
 }
 </style>

@@ -1,26 +1,46 @@
 <template>
-  <v-container class="gameInterface" :style="{'min-height': `calc(100vh - ${appbarHeight}px)`}">
-    <template v-if="!loading">
-      <transition-group name="translated" tag="div" :css="false" appear @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter">
+  <v-container
+    class="gameInterface"
+    :style="{ 'min-height': `calc(100vh - ${appbarHeight}px)` }"
+  >
+    <template>
+      <transition-group
+        tag="div"
+        name="translated"
+        appear
+        @before-enter="beforeEnter"
+        @enter="enter"
+        @before-leave="beforeLeave"
+        @leave="leave"
+        move-class="moveClass"
+      >
         <state-panel
-          v-for="(state, i) in display"
+          v-for="(state, i) in _states"
+          :key="state.name"
           :data-idx="i"
-          :key="state.idFromName"   
+          :ref="state.name"
           :state="state"
-          :rounded="[i === 0, i === display.length - 1]"
-          @state-found="toggleFoundStatus($event)"
+          :rounded="[i === 0, i === _states.length - 1]"
         ></state-panel>
       </transition-group>
     </template>
+    <!-- <template v-else>
+      <v-icon>mdi-alert-circle-outline</v-icon>States to Display
+    </template> -->
+
     <transition enter-active-class="animate__animated animate__fadeIn">
-      <stats-and-filters-dialog v-if="panelsMounted" :plateCount="plateCount" :sortAndFilter="sortAndFilter" @reorder="sortAndFilter=$event"/>
+      <stats-and-filters-dialog
+        :sortAndFilterOptions="[sort, filter]"
+        @sort-changed="sort = $event"
+        @filter-changed="filter = $event"
+      />
     </transition>
   </v-container>
 </template>
 
 <script>
-import { _stateObjects } from "../_stateObjects.js";
-import { _queries } from "../wikiVoyageQuery.js";
+import { _allStates } from "../_allStates.js";
+import { _wikidataIds } from "../_wikidataIds.js";
 
 import StatePanel from "./StatePanel.vue";
 import StatsAndFiltersDialog from "./StatsAndFiltersDialog.vue";
@@ -33,150 +53,171 @@ export default {
 
   data() {
     return {
-      states: _stateObjects,
-      sortAndFilter: [0, 0],
+      states: [],
+      sort: 0,
+      filter: 0,
 
       loading: true,
       panelsMounted: false,
 
       intersectionObserver: undefined,
       intersectionObserverTarget: undefined,
-      transitioning: false
+      transitioning: false,
     };
   },
 
   computed: {
-    display() {
-      let [sort, filter] = this.sortAndFilter;
+    _states() {
+      let result;
 
-      if (sort === 0 && filter === 0) {
-        return this.states;
-      } else if (sort === 0 && filter === 1) {
-        return this.states.filter(s => s.found);
-      } else if (sort === 0 && filter === 2) {
-        return this.states.filter(s => !s.found);
-      } else if (sort === 1 && filter === 0) {
-        return this.states.slice().reverse();
-      } else if (sort === 1 && filter === 1) {
-        return this.states.filter(s => s.found).reverse();
-      } else if (sort === 1 && filter === 2) {
-        return this.states.filter(s => !s.found).reverse();
+      switch (this.sort) {
+        case 0: {
+          result = this.states;
+          break;
+        }
+        case 1: {
+          result = this.states.slice().reverse();
+          break;
+        }
+        default: {
+          result = this.states;
+          break;
+        }
       }
+
+      switch (this.filter) {
+        case 0: {
+          break;
+        }
+        case 1: {
+          result = result.filter((state) => state.found);
+          break;
+        }
+        case 2: {
+          result = result.filter((state) => !state.found);
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+
+      return result;
     },
+    // foundStates() {
+    //   let result, stateRefs = [];
+
+    //   this.states.forEach(state => {
+    //     stateRefs.push(this.$refs[`${state}`][0]);
+    //   })
+
+    //   result = stateRefs
+    //     .filter(state => {
+    //     return state.found;
+    //   }).map(state => {
+    //     return state.name;
+    //   });
+
+    //   return result;
+    // },
 
     plateCount() {
-      return this.states.filter(state => state.found).length;
+      return this.states.filter((state) => state.found).length;
     },
 
     appbarHeight() {
-      if (this.$vuetify.breakpoint.name === 'xs') {
+      if (this.$vuetify.breakpoint.name === "xs") {
         return 56;
       }
 
       return 64;
-    }
+    },
   },
 
   methods: {
-    testFn(event) {
-      console.log(event)
+    handleIntersect(entries) {
+      if (!this.transitioning) {
+        entries.forEach((entry) => {
+          this.$emit("intersection", entry.isIntersecting);
+        });
+      }
+    },
+    beforeEnter(el) {
+      el.style.opacity = 0;
+      el.style.transform = "translate(0, 5%)";
     },
     enter(el, done) {
-      let delay = el.dataset.idx * 100;
+      let delay = el.dataset.idx * 50;
 
       setTimeout(() => {
         el.style.opacity = "100";
-        el.style.transform = "translate(0, 0)"
+        el.style.transform = "translate(0, 0)";
         el.style.transition = "all 250ms ease-in-out";
-        done();
-      }, delay)
+        done;
+      }, delay);
     },
-    toggleFoundStatus(state) {
-      state.found = !state.found;
+    beforeLeave(el) {
+      el.style.opacity = 100;
     },
-    handleIntersect(entries) {
-      if (!this.transitioning) {
-        entries.forEach(entry => {
-          this.$emit('intersection', entry.isIntersecting);
-        })
-      }
-    },
-    getIntersectionOberserverTargetID() {
-      return `#${this.display[this.display.length - 1].idFromName}`;
-    },
-    beforeEnter(el) {
-      this.$nextTick(() => {
-        if (el.dataset.idx == 0) this.transitioning = true
-      });
-
+    leave(el) {
       el.style.opacity = 0;
-      el.style.transform = "translate(0, 5%)"
     },
-    afterEnter(el) {
-      this.$nextTick(() => {
-        if (el.dataset.idx == this.display.length - 1) this.transitioning = false
-      });
-    }
   },
 
   watch: {
     loading: function () {
       this.$nextTick(() => {
-        setTimeout(() => this.panelsMounted = true, 500);
+        setTimeout(() => (this.panelsMounted = true), 500);
       });
     },
-    display() {
+    _states() {
       this.transitioning = true;
     },
     transitioning() {
-      setTimeout(() => this.transitioning = false, 1000)
-    }
+      setTimeout(() => (this.transitioning = false), 1000);
+    },
+    intersectionObserverTarget() {
+      this.intersectionObserver.observe(this.intersectionObserverTarget);
+    },
   },
 
   created() {
-    const options = { root: null, rootMargin: "0px", threshold: 1 };
-    
-    this.intersectionObserver = new IntersectionObserver(
-      this.handleIntersect,
-      options
-    );
-    //Fetch data from API. _queries imported above.
-    Promise.all(_queries.map((q) => fetch(q)))
-      .then((res) => {
-        let jsonData = res.map((i) => i.json());
-        return Promise.all(jsonData);
-      })
-      .then((data) => {
-        let results = data.reduce((a, b) => a.concat(b.query.pages), []);
-
-        this.states.forEach((state) => {
-          let fetchedStateData = results.find(
-            (result) =>
-              result.title === state.name ||
-              result.title === state.name + " (state)"
-          );
-
-          state.extract = fetchedStateData.extract;
-          state.fullurl = fetchedStateData.fullurl;
+    if (!this.states.length) {
+      _allStates.forEach((state, i) => {
+        this.states.push({
+          name: state,
+          found: false,
+          wikidataId: _wikidataIds[i],
         });
+      });
+    }
+  },
+  mounted() {
+    this.intersectionObserver = new IntersectionObserver(this.handleIntersect, {
+      root: null,
+      rootMargin: "0px",
+      threshold: 1,
+    });
 
-        this.loading = false;
-      })
-      .catch((err) => console.log(err));
+    let initialTarget = this._states[this._states.length - 1],
+      initialTargetEl = this.$refs[`${initialTarget.name}`][0].$el;
+
+    this.intersectionObserverTarget = initialTargetEl;
+  },
+  beforeUpdate() {
+    this.intersectionObserver.unobserve(this.intersectionObserverTarget);
   },
   updated() {
-    let newTarget = this.display[this.display.length - 1],
-        newTargetEl = document.querySelector(`#${newTarget.idFromName}`);
-        
-    if (this.intersectionObserverTarget) {
-      if (this.intersectionObserverTarget !== newTargetEl) {
-          this.intersectionObserver.unobserve(this.intersectionObserverTarget);
-      }
-    }
+    this.$nextTick(() => {
+      if (this._states.length) {
+        let newTarget = this._states[this._states.length - 1],
+          newTargetEl = this.$refs[`${newTarget.name}`][0].$el;
 
-    this.intersectionObserverTarget = newTargetEl;
-    this.intersectionObserver.observe(this.intersectionObserverTarget);
-  }
+        this.intersectionObserverTarget = newTargetEl;
+        this.intersectionObserver.observe(this.intersectionObserverTarget);
+      }
+    });
+  },
 };
 </script>
 
@@ -185,22 +226,12 @@ export default {
   position: relative;
   overflow: hidden;
 }
-.translated-enter-active  {
-  transition: all 1s ease;
-}
+
 .translated-leave-active {
-  transition: all 1s ease;
   position: absolute;
 }
-/* .translated-enter {
-  transform:translate(100%, 0);
-} */
 
-.translated-enter, .translated-leave-to {
-  opacity: 0;
-}
-.translated-move {
-  transition: none 350ms ease-in;
-
+.moveClass {
+  transition: all 500ms ease -250ms;
 }
 </style>

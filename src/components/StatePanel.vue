@@ -1,50 +1,291 @@
 <template>
   <v-container
-    :id="state.idFromName"
+    :id="idFromName"
     :class="{
-      'my-3 elevation-3': open,
+      'my-3 elevation-6': open,
+      white: !state.found,
+      'light-green lighten-5': state.found,
       'rounded-t': rounded[0],
       'rounded-b': rounded[1],
-      'white': !state.found,
-      'light-green lighten-5': state.found
     }"
-    class="panel"
   >
-    <v-row class="d-flex justify-space-between align-center pa-3">
+    <v-row class="d-flex justify-space-between align-center">
       <v-col cols="auto">
         <v-checkbox
           :label="state.name"
           :input-value="state.found"
-          @click="$emit('state-found', state)"
+          @click="state.found = !state.found"
         />
       </v-col>
       <v-spacer></v-spacer>
       <v-col cols="auto">
-        <v-btn icon @click="open = !open">
-          <v-icon :class="{'arrowUp': open}">mdi-chevron-down</v-icon>
+        <v-btn
+          icon
+          @click="
+            [
+              (open = !open),
+              fetchData(copyQuery),
+              fetchData(imgQuery),
+              fetchData(quickFactsQuery),
+            ]
+          "
+        >
+          <v-icon :class="{ arrowUp: open }">mdi-chevron-down</v-icon>
         </v-btn>
       </v-col>
     </v-row>
     <v-expand-transition>
-      <v-row v-show="open" class="pa-3">
-        <v-col>{{ state.extract }}</v-col>
-      </v-row>
+      <v-container fluid v-show="open" :style="maxHeight">
+        <template v-if="!loading">
+          <v-row>
+            <v-col cols="12" sm="5" md="4">
+              <v-img
+                :src="img"
+                max-height="300"
+                class="rounded-sm elevation-3"
+              ></v-img>
+            </v-col>
+            <v-col cols="12" sm="7" md="8">
+              <span>{{ extract }}</span>
+            </v-col>
+          </v-row>
+          <v-row>
+            <template v-for="fact in quickFacts">
+              <v-col
+                cols="12"
+                :key="fact"
+                v-show="fact[getQuickfactProp(fact)]"
+              >
+                {{ fact[getQuickfactProp(fact)] }}
+              </v-col>
+            </template>
+          </v-row>
+        </template>
+        <template v-else>
+          <v-skeleton-loader type="image, article" />
+        </template>
+      </v-container>
     </v-expand-transition>
   </v-container>
 </template>
 
 <script>
-export default {
-  props: ["state", "rounded"],
+import { wikiVoyageQuery } from "../queries.js";
+import { wikipediaImgQuery } from "../queries.js";
+import { wikidataQuery } from "../queries.js";
+import { headers } from "../queries.js";
 
-  data: () => ({
-    open: false,
-  }),
+export default {
+  props: ["state", "idx", "filterValue", "rounded"],
+
+  data() {
+    return {
+      open: false,
+
+      extract: undefined,
+      url: undefined,
+      img: undefined,
+      quickFacts: [
+        { fact: "inception", propVal: "P571", time: undefined },
+        { fact: "nickname", propVal: "P1449", text: undefined },
+        { fact: "mottoText", propVal: "P1451", text: undefined },
+        { fact: "capital", propVal: "P36", "wikibase-item": undefined },
+        { fact: "highestPt", propVal: "P610", "wikibase-item": undefined },
+        { fact: "lowestPt", propVal: "P1589", "wikibase-item": undefined },
+        { fact: "population", propVal: "P1082", amount: undefined },
+      ],
+    };
+  },
+
+  computed: {
+    copyQuery() {
+      return wikiVoyageQuery + this.nameForFetch;
+    },
+    imgQuery() {
+      let [start, end] = wikipediaImgQuery.split("STATENAME");
+
+      return [start, this.state.name, end].join("");
+    },
+    quickFactsQuery() {
+      let [start, end] = wikidataQuery.split("ENTITYID");
+
+      return [start, this.state.wikidataId, end].join("");
+    },
+    loading() {
+      if (this.extract && this.url && this.img) {
+        return false;
+      }
+
+      return true;
+    },
+    maxHeight() {
+      if (this.$vuetify.breakpoint.name === "xs") {
+        return "max-height:366px;overflow:scroll;";
+      }
+
+      return "";
+    },
+
+    wide() {
+      return this.$vuetify.breakpoint.width > this.$vuetify.breakpoint.height;
+    },
+
+    idFromName() {
+      if (this.state.name === "Washington, D.C.") {
+        return "washingtondc";
+      }
+
+      let id = this.state.name.toLowerCase();
+
+      if (id.includes(" ")) {
+        let idArr = id.split("");
+
+        let sliceStart = 0;
+        let idxOfSpace = idArr.indexOf(" ");
+
+        while (idxOfSpace !== -1) {
+          idArr = idArr
+            .slice(sliceStart, idxOfSpace)
+            .concat(idArr.slice(idxOfSpace + 1));
+
+          sliceStart = idxOfSpace;
+          idxOfSpace = idArr.indexOf(" ");
+        }
+
+        id = idArr.join("");
+      }
+
+      return id;
+    },
+
+    nameForFetch() {
+      let a = this.state.name;
+
+      if (a.includes(" ")) {
+        let b = a.split("");
+        b[b.indexOf(" ")] = "_";
+        a = b.join("");
+      }
+
+      if (a === "New_York" || a === "Georgia" || a === "Washington") {
+        a = a + " (state)";
+      }
+
+      return a;
+    },
+  },
+
+  methods: {
+    getQuickfactProp(fact) {
+      let keys = Object.keys(fact);
+
+      return keys[keys.length - 1];
+    },
+    async fetchData(query) {
+      await fetch(query, headers)
+        .then((rsp) => rsp.json())
+        .then((rspData) => {
+          if (query === this.copyQuery) {
+            let data = rspData.query.pages[0];
+
+            this.url = data.fullurl;
+            this.extract = data.extract;
+
+            return;
+          }
+
+          if (query === this.imgQuery) {
+            this.img = rspData.preferred.url;
+
+            return;
+          }
+
+          if (query === this.quickFactsQuery) {
+            this.quickFacts.forEach((fact) => {
+              let claim = rspData.claims[fact.propVal];
+
+              if (claim.length == 1) {
+                claim = claim[0];
+              } else {
+                claim.some((c) => c.rank == "preferred")
+                  ? (claim = claim.find((c) => c.rank == "preferred"))
+                  : (claim = claim.find((c) => c.rank == "normal"));
+              }
+
+              let datatype = claim.mainsnak.datatype;
+
+              if (datatype === "wikibase-item") {
+                let followUpItem = claim.mainsnak.datavalue.value.id;
+
+                fetch(
+                  `https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&ids=${followUpItem}&sites=enwiki&titles=&props=labels&formatversion=2&origin=*`
+                )
+                  .then((res) => res.json())
+                  .then((rspData) => {
+                    fact["wikibase-item"] =
+                      rspData.entities[followUpItem].labels.en.value;
+                  });
+              } else {
+                const keys = Object.keys(fact),
+                  prop = keys[keys.length - 1];
+
+                fact[prop] = claim.mainsnak.datavalue.value[prop];
+              }
+
+              // switch(datatype) {
+              //   case "time": {
+              //     fact.text = claim.mainsnak.datavalue.value.time;
+              //     break;
+              //   }
+              //   case "monolingualtext": {
+              //     fact.text = claim.mainsnak.datavalue.value.text;
+              //     break;
+              //   }
+              //   case "wikibase-item": {
+              //     followUp.push({fact: key, id: claim.mainsnak.datavalue.value.id});
+              //     break;
+              //   }
+              //   case "quantity": {
+              //     fact[key].text = claim.mainsnak.datavalue.value.amount;
+              //     break;
+              //   }
+              //   default: {
+              //     break;
+              //   }
+              // }
+            });
+
+            // if (followUp.length) {
+            //   let followUpQuery = `https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&ids=${followUp.map(f => f.id).join('|')}&sites=&titles=&props=labels&formatversion=2&origin=*`;
+
+            //   fetch(followUpQuery)
+            //       .then(rsp => rsp.json())
+            //       .then(data => {
+            //         //console.log(followUp)
+            //         followUp.forEach(f => {
+            //           let quickFact = this.quickFacts.find(x => Object.keys(x)[0] === f.fact);
+            //           console.log(quickFact)
+            //           quickFact[f.fact].text = data.entities[f.id].labels.en.value;
+            //         })
+            //       })
+            //       .catch(err => console.log(err))
+
+            // }
+
+            return;
+          }
+        })
+        .catch((err) => console.log(err));
+    },
+  },
 };
 </script>
 
 <style>
 .arrowUp {
   transform: rotate(-0.5turn);
+}
+.panel {
+  transition: all 500ms ease;
 }
 </style>

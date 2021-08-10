@@ -1,8 +1,10 @@
 <template>
-  <div class="dialogContainer d-flex flex-column"
+  <div
+    class="dialogContainer d-flex flex-column"
     v-touch="{
-      down: () => evaluateClose()
-    }">
+      down: () => evaluateClose(),
+    }"
+  >
     <div
       class="
         align-self-end
@@ -46,13 +48,13 @@
             </v-col>
             <v-col class="d-flex justify-end">
               <v-progress-linear
-                  :value="(plateCount / 50) * 100"
-                  height="1.5rem"
-                  class="align-self-end"
-                  color="light-green"
-                  rounded
-                  >{{ plateCount }}</v-progress-linear
-                >
+                :value="(plateCount / 50) * 100"
+                height="1.5rem"
+                class="align-self-end"
+                color="light-green"
+                rounded
+                >{{ plateCount }}</v-progress-linear
+              >
             </v-col>
           </v-row>
           <v-row class="d-flex align-center">
@@ -61,20 +63,20 @@
             </v-col>
             <v-spacer></v-spacer>
             <v-col class="d-flex justify-end">
-              <v-btn-toggle v-model="toggle_sort" mandatory>
-                  <v-btn>
-                    <v-icon>mdi-order-alphabetical-ascending</v-icon>
-                  </v-btn>
+              <v-btn-toggle
+                :value="sortAndFilterOptions[0]"
+                @change="$emit('sort-changed', $event)"
+                mandatory
+              >
+                <v-btn>
+                  <v-icon>mdi-order-alphabetical-ascending</v-icon>
+                </v-btn>
 
-                  <v-btn>
-                    <v-icon>mdi-order-alphabetical-descending</v-icon>
-                  </v-btn>
-
-                  <v-btn>
-                    <v-icon>mdi-order-bool-descending-variant</v-icon>
-                  </v-btn>
-                </v-btn-toggle>
-            </v-col>    
+                <v-btn>
+                  <v-icon>mdi-order-alphabetical-descending</v-icon>
+                </v-btn>
+              </v-btn-toggle>
+            </v-col>
           </v-row>
           <v-row class="d-flex align-center">
             <v-col cols="auto">
@@ -82,19 +84,23 @@
             </v-col>
             <v-spacer></v-spacer>
             <v-col class="d-flex justify-end">
-              <v-btn-toggle v-model="toggle_filter" mandatory>
-                  <v-btn>
-                    <v-icon>mdi-alpha-a</v-icon>
-                  </v-btn>
+              <v-btn-toggle
+                :value="sortAndFilterOptions[1]"
+                @change="$emit('filter-changed', $event)"
+                mandatory
+              >
+                <v-btn>
+                  <v-icon>mdi-alpha-a</v-icon>
+                </v-btn>
 
-                  <v-btn>
-                    <v-icon>mdi-check-bold</v-icon>
-                  </v-btn>
+                <v-btn>
+                  <v-icon>mdi-check-bold</v-icon>
+                </v-btn>
 
-                  <v-btn>
-                    <v-icon>mdi-crop-square</v-icon>
-                  </v-btn>
-                </v-btn-toggle>
+                <v-btn>
+                  <v-icon>mdi-crop-square</v-icon>
+                </v-btn>
+              </v-btn-toggle>
             </v-col>
           </v-row>
         </v-container>
@@ -105,33 +111,22 @@
 
 <script>
 export default {
-  props: ["plateCount", "width", "sortAndFilter"],
+  props: ["sortAndFilterOptions", "plateCount", "width"],
 
   data() {
     return {
       open: false,
-      toggle_sort: this.sortAndFilter[0],
-      toggle_filter: this.sortAndFilter[1],
 
       panelWidth: null,
-      panelRight: null
+      panelRight: null,
     };
   },
 
   methods: {
     evaluateClose() {
       if (this.open) {
-        return this.open = false;
+        return (this.open = false);
       }
-    }
-  },
-
-  watch: {
-    toggle_sort: function () {
-      return this.$emit("reorder", [this.toggle_sort, this.toggle_filter]);
-    },
-    toggle_filter: function () {
-      return this.$emit("reorder", [this.toggle_sort, this.toggle_filter]);
     },
   },
 
@@ -139,15 +134,19 @@ export default {
     this.$nextTick(() => {
       let main = document.querySelector(".gameInterface");
       let mainStyles = getComputedStyle(main);
-      let mainMargin = mainStyles.marginRight.slice(0, mainStyles.marginRight.indexOf('px'));
-      let mainPadding = mainStyles.paddingRight.slice(0, mainStyles.paddingRight.indexOf('px'));
-            
+      let mainMargin = mainStyles.marginRight.slice(
+        0,
+        mainStyles.marginRight.indexOf("px")
+      );
+      let mainPadding = mainStyles.paddingRight.slice(
+        0,
+        mainStyles.paddingRight.indexOf("px")
+      );
 
-    this.panelWidth = document.querySelector(".panel").offsetWidth + 12;
-    this.panelRight = Number(mainMargin) + Number(mainPadding);
-    })
-    
-  }
+      this.panelWidth = document.querySelector(".panel").offsetWidth + 12;
+      this.panelRight = Number(mainMargin) + Number(mainPadding);
+    });
+  },
 };
 </script>
 
@@ -161,7 +160,7 @@ export default {
   padding: 0;
   z-index: 9999;
   transition: all 300ms ease;
-  width:100vw;
+  width: 100vw;
   filter: drop-shadow(0px 10px 40px rgba(0, 0, 0, 0.5));
 }
 </style>
