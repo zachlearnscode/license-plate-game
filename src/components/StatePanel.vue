@@ -46,19 +46,38 @@
               ></v-img>
             </v-col>
             <v-col cols="12" sm="7" md="8">
+              <h3>About {{ state.name }}</h3>
               <span>{{ extract }}</span>
+              <v-container class="mt-3">
+                <v-row>
+                  <v-col class="pa-0">
+                    <h3>Quick Facts</h3>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <template v-for="(fact, i) in quickFacts">
+                    <v-col
+                      :key="i"
+                      cols="12"
+                      sm="auto"
+                      v-if="fact[getQuickfactProp(fact)]"
+                      class="pa-0 my-2"
+                    >
+                      <v-chip
+                        :color="state.found ? 'light-green lighten-4' : ''"
+                      >
+                        <span class="font-weight-bold"
+                          >{{ fact.fact }}: &nbsp;</span
+                        >
+                        <span>{{
+                          formatQuickFact(fact[getQuickfactProp(fact)])
+                        }}</span>
+                      </v-chip>
+                    </v-col>
+                  </template>
+                </v-row>
+              </v-container>
             </v-col>
-          </v-row>
-          <v-row>
-            <template v-for="fact in quickFacts">
-              <v-col
-                cols="12"
-                :key="fact"
-                v-show="fact[getQuickfactProp(fact)]"
-              >
-                {{ fact[getQuickfactProp(fact)] }}
-              </v-col>
-            </template>
           </v-row>
         </template>
         <template v-else>
@@ -86,13 +105,13 @@ export default {
       url: undefined,
       img: undefined,
       quickFacts: [
-        { fact: "inception", propVal: "P571", time: undefined },
-        { fact: "nickname", propVal: "P1449", text: undefined },
-        { fact: "mottoText", propVal: "P1451", text: undefined },
-        { fact: "capital", propVal: "P36", "wikibase-item": undefined },
-        { fact: "highestPt", propVal: "P610", "wikibase-item": undefined },
-        { fact: "lowestPt", propVal: "P1589", "wikibase-item": undefined },
-        { fact: "population", propVal: "P1082", amount: undefined },
+        { fact: "Inception", propVal: "P571", time: undefined },
+        { fact: "Nickname", propVal: "P1449", text: undefined },
+        { fact: "Motto", propVal: "P1451", text: undefined },
+        { fact: "Capital", propVal: "P36", "wikibase-item": undefined },
+        { fact: "Highest Pt.", propVal: "P610", "wikibase-item": undefined },
+        { fact: "Lowest Pt.", propVal: "P1589", "wikibase-item": undefined },
+        { fact: "Population", propVal: "P1082", amount: undefined },
       ],
     };
   },
@@ -226,56 +245,35 @@ export default {
                       rspData.entities[followUpItem].labels.en.value;
                   });
               } else {
-                const keys = Object.keys(fact),
-                  prop = keys[keys.length - 1];
-
+                let prop = this.getQuickfactProp(fact);
                 fact[prop] = claim.mainsnak.datavalue.value[prop];
               }
-
-              // switch(datatype) {
-              //   case "time": {
-              //     fact.text = claim.mainsnak.datavalue.value.time;
-              //     break;
-              //   }
-              //   case "monolingualtext": {
-              //     fact.text = claim.mainsnak.datavalue.value.text;
-              //     break;
-              //   }
-              //   case "wikibase-item": {
-              //     followUp.push({fact: key, id: claim.mainsnak.datavalue.value.id});
-              //     break;
-              //   }
-              //   case "quantity": {
-              //     fact[key].text = claim.mainsnak.datavalue.value.amount;
-              //     break;
-              //   }
-              //   default: {
-              //     break;
-              //   }
-              // }
             });
-
-            // if (followUp.length) {
-            //   let followUpQuery = `https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&ids=${followUp.map(f => f.id).join('|')}&sites=&titles=&props=labels&formatversion=2&origin=*`;
-
-            //   fetch(followUpQuery)
-            //       .then(rsp => rsp.json())
-            //       .then(data => {
-            //         //console.log(followUp)
-            //         followUp.forEach(f => {
-            //           let quickFact = this.quickFacts.find(x => Object.keys(x)[0] === f.fact);
-            //           console.log(quickFact)
-            //           quickFact[f.fact].text = data.entities[f.id].labels.en.value;
-            //         })
-            //       })
-            //       .catch(err => console.log(err))
-
-            // }
 
             return;
           }
         })
         .catch((err) => console.log(err));
+    },
+    formatQuickFact(data) {
+      let incept = this.quickFacts[0];
+      let population = this.quickFacts[this.quickFacts.length - 1];
+
+      if (data === incept[this.getQuickfactProp(incept)]) {
+        data = data.slice(1, 11);
+
+        let [year, month, day] = data.split("-");
+
+        return `${month}/${day}/${year}`;
+      }
+
+      if (data === population[this.getQuickfactProp(population)]) {
+        data = parseInt(data.slice(1));
+
+        return data.toLocaleString();
+      }
+
+      return data;
     },
   },
 };

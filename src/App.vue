@@ -11,6 +11,9 @@
   </v-app>
 </template>
 
+// To Do // Fix bottom tab placement // Search for Zoom images where available
+// Add option to turn off background
+
 <script>
 import Foreground from "./components/Foreground.vue";
 
