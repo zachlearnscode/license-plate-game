@@ -1,47 +1,22 @@
 <template>
-  <div
-    class="dialogContainer d-flex flex-column"
-    v-touch="{
-      down: () => evaluateClose(),
-    }"
-  >
-    <div
-      class="
-        align-self-end
-        d-flex
-        align-center
-        justify-center
-        py-1
-        rounded-t-lg
-        amber
-        lighten-3
-      "
-      style="width: 30%"
-    >
-      <v-icon @click="open = !open" :class="open ? 'arrowDown' : ''"
-        >mdi-chevron-up</v-icon
-      >
-    </div>
-    <v-expand-transition>
-      <div
-        v-if="open"
-        class="amber lighten-3 rounded-tl-lg pt-3 px-3 d-flex justify-center"
-        style="width: 100%; max-height: 50vh"
-      >
-        <v-container
-          class="white pa-4"
-          style="
-            width: 95%;
-            height: 200%;
-            margin-top: 5px;
-            filter: drop-shadow(1px 0px 5px rgba(0, 0, 0, 0.2));
-          "
+  <v-dialog max-width="500px" v-model="open">
+    <template v-slot:activator="{ on, attrs }">
+      <v-btn color="white" icon v-bind="attrs" v-on="on">
+        <v-icon>mdi-cog</v-icon>
+      </v-btn>
+    </template>
+    <v-card>
+      <v-card-title>
+        <span>Plate Count + Sort & Filter</span>
+        <v-spacer></v-spacer>
+        <v-card-actions class="pr-0"
+          ><v-btn icon @click="open = false" class="pr-0"
+            ><v-icon>mdi-close</v-icon></v-btn
+          ></v-card-actions
         >
-          <v-row>
-            <v-col cols="12" class="d-flex justify-center">
-              <h2>Stats & Filters</h2>
-            </v-col>
-          </v-row>
+      </v-card-title>
+      <v-card-text>
+        <v-container class="white px-0">
           <v-row class="d-flex align-center">
             <v-col cols="auto">
               <span class="font-weight-bold">Plate Count</span>
@@ -64,8 +39,10 @@
             <v-spacer></v-spacer>
             <v-col class="d-flex justify-end">
               <v-btn-toggle
-                :value="sortAndFilterOptions[0]"
-                @change="$emit('sort-changed', $event)"
+                :value="sortAndFilter[0]"
+                @change="
+                  $emit('update-sort-and-filter', [$event, sortAndFilter[1]])
+                "
                 mandatory
               >
                 <v-btn>
@@ -85,82 +62,70 @@
             <v-spacer></v-spacer>
             <v-col class="d-flex justify-end">
               <v-btn-toggle
-                :value="sortAndFilterOptions[1]"
-                @change="$emit('filter-changed', $event)"
+                :value="sortAndFilter[1]"
+                @change="
+                  $emit('update-sort-and-filter', [sortAndFilter[0], $event])
+                "
                 mandatory
               >
                 <v-btn>
                   <v-icon>mdi-alpha-a</v-icon>
                 </v-btn>
 
-                <v-btn>
+                <v-btn :disabled="plateCount < 1">
                   <v-icon>mdi-check-bold</v-icon>
                 </v-btn>
 
-                <v-btn>
+                <v-btn :disabled="plateCount < 1">
                   <v-icon>mdi-crop-square</v-icon>
                 </v-btn>
               </v-btn-toggle>
             </v-col>
           </v-row>
+          <v-row>
+            <v-col class="d-flex align-center">
+              <div class="d-flex align-center">
+                <span class="font-weight-bold">Start New Game</span>
+                <v-checkbox v-model="checkbox" class="ml-1"></v-checkbox>
+              </div>
+              <v-spacer></v-spacer>
+              <v-btn
+                :disabled="!checkbox"
+                :dark="checkbox"
+                color="red"
+                @click="[$emit('new-game-requested'), (open = false)]"
+                >Confirm</v-btn
+              >
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col class="text-center">Last Saved: {{ lastSaved }}</v-col>
+          </v-row>
         </v-container>
-      </div>
-    </v-expand-transition>
-  </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
 export default {
-  props: ["sortAndFilterOptions", "plateCount", "width"],
+  props: ["sortAndFilter", "plateCount", "lastSaved"],
 
   data() {
     return {
       open: false,
-
-      panelWidth: null,
-      panelRight: null,
+      checkbox: false,
     };
   },
 
-  methods: {
-    evaluateClose() {
-      if (this.open) {
-        return (this.open = false);
+  watch: {
+    open() {
+      if (!this.open) {
+        if (this.checkbox) {
+          return (this.checkbox = false);
+        }
       }
     },
   },
-
-  mounted() {
-    this.$nextTick(() => {
-      let main = document.querySelector(".gameInterface");
-      let mainStyles = getComputedStyle(main);
-      let mainMargin = mainStyles.marginRight.slice(
-        0,
-        mainStyles.marginRight.indexOf("px")
-      );
-      let mainPadding = mainStyles.paddingRight.slice(
-        0,
-        mainStyles.paddingRight.indexOf("px")
-      );
-
-      this.panelWidth = document.querySelector(".panel").offsetWidth + 12;
-      this.panelRight = Number(mainMargin) + Number(mainPadding);
-    });
-  },
 };
 </script>
-
-<style scoped>
-.arrowDown {
-  transform: rotate(0.5turn);
-}
-.dialogContainer {
-  position: fixed;
-  bottom: 0;
-  padding: 0;
-  z-index: 9999;
-  transition: all 300ms ease;
-  width: 100vw;
-  filter: drop-shadow(0px 10px 40px rgba(0, 0, 0, 0.5));
-}
-</style>

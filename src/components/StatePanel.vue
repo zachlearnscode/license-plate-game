@@ -14,7 +14,7 @@
         <v-checkbox
           :label="state.name"
           :input-value="state.found"
-          @click="state.found = !state.found"
+          @click="$emit('state-toggled', state.found)"
         />
       </v-col>
       <v-spacer></v-spacer>
@@ -48,9 +48,9 @@
             <v-col cols="12" sm="7" md="8">
               <h3>About {{ state.name }}</h3>
               <span>{{ extract }}</span>
-              <v-container class="mt-3">
+              <v-container class="mt-3 pa-0">
                 <v-row>
-                  <v-col class="pa-0">
+                  <v-col class="pb-0">
                     <h3>Quick Facts</h3>
                   </v-col>
                 </v-row>
@@ -58,10 +58,8 @@
                   <template v-for="(fact, i) in quickFacts">
                     <v-col
                       :key="i"
-                      cols="12"
-                      sm="auto"
+                      cols="auto"
                       v-if="fact[getQuickfactProp(fact)]"
-                      class="pa-0 my-2"
                     >
                       <v-chip
                         :color="state.found ? 'light-green lighten-4' : ''"
@@ -78,6 +76,13 @@
                 </v-row>
               </v-container>
             </v-col>
+          </v-row>
+          <v-row>
+            <v-col class="text-center"
+              ><sub class="font-weight-light"
+                >Image and information provided by WikiMedia.</sub
+              ></v-col
+            >
           </v-row>
         </template>
         <template v-else>

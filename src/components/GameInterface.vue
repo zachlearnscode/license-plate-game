@@ -21,20 +21,12 @@
           :ref="state.name"
           :state="state"
           :rounded="[i === 0, i === _states.length - 1]"
+          @state-toggled="
+            [(state.found = !$event), $emit('new-plate-count', plateCount)]
+          "
         ></state-panel>
       </transition-group>
     </template>
-    <!-- <template v-else>
-      <v-icon>mdi-alert-circle-outline</v-icon>States to Display
-    </template> -->
-
-    <transition enter-active-class="animate__animated animate__fadeIn">
-      <stats-and-filters-dialog
-        :sortAndFilterOptions="[sort, filter]"
-        @sort-changed="sort = $event"
-        @filter-changed="filter = $event"
-      />
-    </transition>
   </v-container>
 </template>
 
@@ -43,19 +35,17 @@ import { _allStates } from "../_allStates.js";
 import { _wikidataIds } from "../_wikidataIds.js";
 
 import StatePanel from "./StatePanel.vue";
-import StatsAndFiltersDialog from "./StatsAndFiltersDialog.vue";
 
 export default {
+  props: ["sort", "filter"],
+
   components: {
     StatePanel,
-    StatsAndFiltersDialog,
   },
 
   data() {
     return {
       states: [],
-      sort: 0,
-      filter: 0,
 
       loading: true,
       panelsMounted: false,
@@ -104,22 +94,6 @@ export default {
 
       return result;
     },
-    // foundStates() {
-    //   let result, stateRefs = [];
-
-    //   this.states.forEach(state => {
-    //     stateRefs.push(this.$refs[`${state}`][0]);
-    //   })
-
-    //   result = stateRefs
-    //     .filter(state => {
-    //     return state.found;
-    //   }).map(state => {
-    //     return state.name;
-    //   });
-
-    //   return result;
-    // },
 
     plateCount() {
       return this.states.filter((state) => state.found).length;
@@ -165,11 +139,6 @@ export default {
   },
 
   watch: {
-    loading: function () {
-      this.$nextTick(() => {
-        setTimeout(() => (this.panelsMounted = true), 500);
-      });
-    },
     _states() {
       this.transitioning = true;
     },
