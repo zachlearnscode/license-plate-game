@@ -1,5 +1,10 @@
 <template>
-  <v-dialog max-width="500px" v-model="open">
+  <v-dialog
+    origin="top center"
+    max-width="500px"
+    transition="scroll-y-transition"
+    v-model="open"
+  >
     <template v-slot:activator="{ on, attrs }">
       <v-btn color="white" icon v-bind="attrs" v-on="on">
         <v-icon>mdi-cog</v-icon>
@@ -7,7 +12,7 @@
     </template>
     <v-card>
       <v-card-title>
-        <span>Plate Count + Sort & Filter</span>
+        <span>Info & Options</span>
         <v-spacer></v-spacer>
         <v-card-actions class="pr-0"
           ><v-btn icon @click="open = false" class="pr-0"
@@ -15,8 +20,8 @@
           ></v-card-actions
         >
       </v-card-title>
-      <v-card-text>
-        <v-container class="white px-0">
+      <v-card-text max-height="500px">
+        <v-container fluid class="white px-0">
           <v-row class="d-flex align-center">
             <v-col cols="auto">
               <span class="font-weight-bold">Plate Count</span>
@@ -34,7 +39,7 @@
           </v-row>
           <v-row class="d-flex align-center">
             <v-col cols="auto">
-              <span class="font-weight-bold">Sort By</span>
+              <span class="font-weight-bold">Sort</span>
             </v-col>
             <v-spacer></v-spacer>
             <v-col class="d-flex justify-end">
@@ -57,7 +62,7 @@
           </v-row>
           <v-row class="d-flex align-center">
             <v-col cols="auto">
-              <span class="font-weight-bold">Filter By</span>
+              <span class="font-weight-bold">Filter</span>
             </v-col>
             <v-spacer></v-spacer>
             <v-col class="d-flex justify-end">
@@ -84,18 +89,19 @@
           </v-row>
           <v-row>
             <v-col class="d-flex align-center">
-              <div class="d-flex align-center">
-                <span class="font-weight-bold">Start New Game</span>
-                <v-checkbox v-model="checkbox" class="ml-1"></v-checkbox>
-              </div>
+              <span class="font-weight-bold">Start New Game</span>
               <v-spacer></v-spacer>
-              <v-btn
-                :disabled="!checkbox"
-                :dark="checkbox"
-                color="red"
-                @click="[$emit('new-game-requested'), (open = false)]"
-                >Confirm</v-btn
-              >
+              <div class="d-flex align-center">
+                <v-checkbox v-model="checkbox" class="ml-1"></v-checkbox>
+                <v-btn
+                  :disabled="!checkbox"
+                  :dark="checkbox"
+                  color="red"
+                  @click="[$emit('new-game-requested'), (open = false)]"
+                >
+                  Confirm
+                </v-btn>
+              </div>
             </v-col>
           </v-row>
           <v-row>

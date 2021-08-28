@@ -150,10 +150,6 @@ export default {
       return "";
     },
 
-    wide() {
-      return this.$vuetify.breakpoint.width > this.$vuetify.breakpoint.height;
-    },
-
     idFromName() {
       if (this.state.name === "Washington, D.C.") {
         return "washingtondc";

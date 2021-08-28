@@ -13,10 +13,7 @@
     </v-app-bar>
 
     <v-main class="blue lighten-1">
-      <v-container
-        class="gameInterface"
-        :style="{ 'min-height': `calc(100vh - ${appbarHeight}px)` }"
-      >
+      <v-container class="gameInterface">
         <template>
           <transition-group
             tag="div"
@@ -42,21 +39,16 @@
           </transition-group>
         </template>
       </v-container>
-      <!-- <game-interface @intersection="hideForeground = $event" @new-plate-count="plateCount = $event"></game-interface> -->
       <foreground :hide="hideForeground"></foreground>
     </v-main>
   </v-app>
 </template>
-
-// To Do // Search for Zoom images where available // Add option to turn off
-background
 
 <script>
 import { _allStates } from "./_allStates.js";
 import { _wikidataIds } from "./_wikidataIds.js";
 
 import StatePanel from "./components/StatePanel.vue";
-// import GameInterface from "./components/GameInterface.vue";
 import StatsAndFiltersDialog from "./components/StatsAndFiltersDialog.vue";
 import Foreground from "./components/Foreground.vue";
 
@@ -128,14 +120,6 @@ export default {
 
     plateCount() {
       return this.states.filter((state) => state.found).length;
-    },
-
-    appbarHeight() {
-      if (this.$vuetify.breakpoint.name === "xs") {
-        return 56;
-      }
-
-      return 64;
     },
   },
 
@@ -257,6 +241,6 @@ export default {
 }
 
 .moveClass {
-  transition: all 500ms ease -250ms;
+  transition: all 500ms ease;
 }
 </style>
